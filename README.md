@@ -27,13 +27,15 @@ serverAgent.setMessageHandler(SampleMessage.class, message -> handleMessage(mess
 serverAgent.setRequestHandler(SampleRequest.class, request -> handleRequest(request));
 serverAgent.startup();
 
-private static void handleMessage(SampleMessage message) {
+// ...
+
+private void handleMessage(SampleMessage message) {
     // ...
     // business logic
     // ...
 }
 
-private static SampleResponse handleRequest(SampleRequest request) {
+private SampleResponse handleRequest(SampleRequest request) {
     SampleResponse response = new SampleResponse();
     // ...
     // business logic
