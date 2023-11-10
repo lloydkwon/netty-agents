@@ -11,8 +11,13 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
 import org.junit.Assert;
 import org.junit.Test;
 import org.opentoolset.nettyagents.TestData.SampleMessage;
@@ -119,6 +124,9 @@ public class MTNettyAgents {
 			serverAgent.getConfig().setTlsEnabled(true);
 			serverAgent.getConfig().setPriKey(serverPriKey);
 			serverAgent.getConfig().setCert(serverCert);
+
+			System.out.println("serverPriKey "+serverPriKey);
+			System.out.println("serverCert "+serverCert);
 		}
 
 		{ // --- on client side
@@ -129,6 +137,10 @@ public class MTNettyAgents {
 			clientAgent.getConfig().setTlsEnabled(true);
 			clientAgent.getConfig().setPriKey(clientPriKey);
 			clientAgent.getConfig().setCert(clientCert);
+
+
+			System.out.println("clientPriKey "+clientPriKey);
+			System.out.println("clientCert "+clientCert);
 		}
 	}
 
@@ -222,5 +234,36 @@ public class MTNettyAgents {
 		SampleResponse response = new SampleResponse("Sample response from client (decrement by 1)", request.getNumber() - 1);
 		System.out.printf("Response sending on client: %s\n", response);
 		return response;
+	}
+
+
+	@Test
+	public void wheel() throws InterruptedException {
+
+		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+		executorService.scheduleWithFixedDelay(new Runnable() {
+			@Override
+			public void run() {
+				System.out.println("hi");
+			}
+		}, 1000,1000, TimeUnit.MILLISECONDS);
+
+		executorService.scheduleWithFixedDelay(new Runnable() {
+			@Override
+			public void run() {
+				System.out.println("hi2");
+			}
+		}, 1000, 1000, TimeUnit.MILLISECONDS);
+
+		executorService.scheduleWithFixedDelay(new Runnable() {
+			@Override
+			public void run() {
+				System.out.println("hi3");
+			}
+		}, 1000,1000,  TimeUnit.MILLISECONDS);
+
+
+		Thread.sleep(1000000);
+//		hashedWheelTimer.
 	}
 }

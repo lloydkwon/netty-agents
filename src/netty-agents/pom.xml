@@ -75,7 +75,6 @@
 				<version>3.2.0</version>
 				<configuration>
 					<source>${java.version}</source>
-					<target>${java.version}</target>
 				</configuration>
 				<executions>
 					<execution>
@@ -93,7 +92,7 @@
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-all</artifactId>
-			<version>4.1.46.Final</version>
+			<version>4.1.98.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -119,6 +118,12 @@
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 			<version>1.2.3</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.15.0</version>
 		</dependency>
 
 		<dependency>

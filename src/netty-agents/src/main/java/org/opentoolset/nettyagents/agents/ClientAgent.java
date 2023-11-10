@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.KeyManagerFactory;
 
+import io.netty.channel.*;
 import org.opentoolset.nettyagents.AbstractAgent;
 import org.opentoolset.nettyagents.AbstractMessage;
 import org.opentoolset.nettyagents.AbstractRequest;
@@ -27,13 +28,6 @@ import org.opentoolset.nettyagents.PeerContext;
 import org.opentoolset.nettyagents.Utils;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -55,11 +49,11 @@ public class ClientAgent extends AbstractAgent {
 
 	private Config config = new Config();
 
-	private PeerContext server = new PeerContext();
+//	private PeerContext server = new PeerContext();
 
 	private boolean shutdownRequested = false;
 
-	// ---
+	private Channel channel;
 
 	/**
 	 * Configuration object including configuration parameters for this agent.<br />
@@ -77,26 +71,26 @@ public class ClientAgent extends AbstractAgent {
 	 * 
 	 * @return
 	 */
-	public PeerContext getServer() {
-		return server;
-	}
+//	public PeerContext getServer() {
+//		return server;
+//	}
 
 	@Override
 	public void stopPeerIdentificationMode() {
 		super.stopPeerIdentificationMode();
-		if (!this.server.isTrusted()) {
-			this.server.getChannelHandlerContext().close();
-			this.server.setChannelHandlerContext(null);
-		}
+//		if (!this.server.isTrusted()) {
+//			this.server.getChannelHandlerContext().close();
+//			this.server.setChannelHandlerContext(null);
+//		}
 	}
 
 	@Override
 	public void startup() {
-		super.startup();
+//		super.startup();
 
 		this.shutdownRequested = false;
 
-		buildSSLContextIfEnabled();
+//		buildSSLContextIfEnabled();
 
 		this.bootstrap.group(workerGroup);
 		this.bootstrap.channel(NioSocketChannel.class);
@@ -111,50 +105,50 @@ public class ClientAgent extends AbstractAgent {
 		try {
 			this.shutdownRequested = true;
 
-			this.workerGroup.shutdownGracefully();
+			this.channel.eventLoop().shutdownGracefully();
 
-			ChannelHandlerContext channelHandlerContext = this.server.getChannelHandlerContext();
-			if (channelHandlerContext != null) {
-				channelHandlerContext.close();
-			}
+//			ChannelHandlerContext channelHandlerContext = this.server.getChannelHandlerContext();
+//			if (channelHandlerContext != null) {
+//				channelHandlerContext.close();
+//			}
 		} catch (Exception e) {
 			logger.warn(e.getLocalizedMessage(), e);
 		}
 	}
 
-	/**
-	 * Sends a request to the server and waits until receiving the response
-	 * 
-	 * @param <TReq>
-	 * @param <TResp>
-	 * @param request
-	 * @return
-	 */
-	public <TReq extends AbstractRequest<TResp>, TResp extends AbstractMessage> TResp doRequest(TReq request) {
-		return getContext().getMessageSender().doRequest(request, this.server);
-	}
+//	/**
+//	 * Sends a request to the server and waits until receiving the response
+//	 *
+//	 * @param <TReq>
+//	 * @param <TResp>
+//	 * @param request
+//	 * @return
+//	 */
+//	public <TReq extends AbstractRequest<TResp>, TResp extends AbstractMessage> TResp doRequest(TReq request) {
+//		return getContext().getMessageSender().doRequest(request, this.server);
+//	}
 
-	/**
-	 * Sends a request to the server and waits until receiving the response or reaching to the specified timeout duration
-	 * 
-	 * @param <TReq>
-	 * @param <TResp>
-	 * @param request
-	 * @param timeoutSec
-	 * @return
-	 */
-	public <TReq extends AbstractRequest<TResp>, TResp extends AbstractMessage> TResp doRequest(TReq request, int timeoutSec) {
-		return getContext().getMessageSender().doRequest(request, this.server, timeoutSec);
-	}
+//	/**
+//	 * Sends a request to the server and waits until receiving the response or reaching to the specified timeout duration
+//	 *
+//	 * @param <TReq>
+//	 * @param <TResp>
+//	 * @param request
+//	 * @param timeoutSec
+//	 * @return
+//	 */
+//	public <TReq extends AbstractRequest<TResp>, TResp extends AbstractMessage> TResp doRequest(TReq request, int timeoutSec) {
+//		return getContext().getMessageSender().doRequest(request, this.server, timeoutSec);
+//	}
 
-	/**
-	 * Sends a message to the server without waiting a response
-	 * 
-	 * @param message
-	 */
-	public void sendMessage(AbstractMessage message) {
-		getContext().getMessageSender().sendMessage(message, this.server);
-	}
+//	/**
+//	 * Sends a message to the server without waiting a response
+//	 *
+//	 * @param message
+//	 */
+//	public void sendMessage(AbstractMessage message) {
+//		getContext().getMessageSender().sendMessage(message, this.server);
+//	}
 
 	// ---
 
@@ -167,7 +161,8 @@ public class ClientAgent extends AbstractAgent {
 				}
 
 				if (channelFuture != null) {
-					channelFuture.channel().closeFuture().sync();
+					this.channel = channelFuture.channel();
+					this.channel.closeFuture().sync();
 				}
 			} catch (Exception e) {
 				logger.error(e.getLocalizedMessage(), e);
@@ -187,34 +182,34 @@ public class ClientAgent extends AbstractAgent {
 		return null;
 	}
 
-	private void buildSSLContextIfEnabled() {
-		if (getConfig().isTlsEnabled()) {
-			try {
-				KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-				{
-					KeyStore keystore = KeyStore.getInstance("JKS");
-					{
-						PrivateKey key = getConfig().getPriKey();
-						Certificate cert = getConfig().getCert();
-
-						keystore.load(null);
-						keystore.setCertificateEntry("my-cert", cert);
-						keystore.setKeyEntry("my-key", key, DEFAULT_IN_MEMORY_KEYSTORE_PW.toCharArray(), new Certificate[] { cert });
-					}
-
-					keyManagerFactory.init(keystore, DEFAULT_IN_MEMORY_KEYSTORE_PW.toCharArray());
-				}
-
-				SslContextBuilder builder = SslContextBuilder.forClient();
-				builder.keyManager(keyManagerFactory);
-				builder.trustManager(new TrustManager(() -> getContext()));
-				SslContext sslContext = builder.build();
-				setSslContext(sslContext);
-			} catch (IOException | GeneralSecurityException e) {
-				logger.error(e.getLocalizedMessage(), e);
-			}
-		}
-	}
+//	private void buildSSLContextIfEnabled() {
+//		if (getConfig().isTlsEnabled()) {
+//			try {
+//				KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+//				{
+//					KeyStore keystore = KeyStore.getInstance("JKS");
+//					{
+//						PrivateKey key = getConfig().getPriKey();
+//						Certificate cert = getConfig().getCert();
+//
+//						keystore.load(null);
+//						keystore.setCertificateEntry("my-cert", cert);
+//						keystore.setKeyEntry("my-key", key, DEFAULT_IN_MEMORY_KEYSTORE_PW.toCharArray(), new Certificate[] { cert });
+//					}
+//
+//					keyManagerFactory.init(keystore, DEFAULT_IN_MEMORY_KEYSTORE_PW.toCharArray());
+//				}
+//
+//				SslContextBuilder builder = SslContextBuilder.forClient();
+//				builder.keyManager(keyManagerFactory);
+//				builder.trustManager(new TrustManager(() -> getContext()));
+//				SslContext sslContext = builder.build();
+//				setSslContext(sslContext);
+//			} catch (IOException | GeneralSecurityException e) {
+//				logger.error(e.getLocalizedMessage(), e);
+//			}
+//		}
+//	}
 
 	// ---
 
@@ -281,7 +276,7 @@ public class ClientAgent extends AbstractAgent {
 		public boolean verifyChannelHandlerContext(ChannelHandlerContext ctx) {
 			boolean result = true;
 			result = result || getContext().isTrustNegotiationMode();
-			result = result || Utils.verifyChannelHandlerContext(ctx, ClientAgent.this.server);
+//			result = result || Utils.verifyChannelHandlerContext(ctx, ClientAgent.this.server);
 			return result;
 		}
 	}
@@ -296,17 +291,17 @@ public class ClientAgent extends AbstractAgent {
 
 		@Override
 		public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-			if (getConfig().isTlsEnabled()) {
-				sslHandler.handshakeFuture().addListener(future -> onHandshakeCompleted(ctx));
-			} else {
-				ClientAgent.this.server.setChannelHandlerContext(ctx);
-			}
+//			if (getConfig().isTlsEnabled()) {
+//				sslHandler.handshakeFuture().addListener(future -> onHandshakeCompleted(ctx));
+//			} else {
+////				ClientAgent.this.server.setChannelHandlerContext(ctx);
+//			}
 		}
 
 		@Override
 		public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
 			ctx.close();
-			ClientAgent.this.server.setChannelHandlerContext(null);
+//			ClientAgent.this.server.setChannelHandlerContext(null);
 		}
 
 		@Override
@@ -314,24 +309,24 @@ public class ClientAgent extends AbstractAgent {
 		}
 
 		private void onHandshakeCompleted(ChannelHandlerContext ctx) {
-			try {
-				Certificate[] peerCerts = this.sslHandler.engine().getSession().getPeerCertificates();
-				if (!getContext().isTrustNegotiationMode()) {
-					Utils.verifyCertChain(peerCerts, getContext().getTrustedCerts());
-				}
-
-				Certificate peerCert = peerCerts[0];
-				if (peerCert instanceof X509Certificate) {
-					PeerContext server = ClientAgent.this.server;
-					server.setCert((X509Certificate) peerCert);
-					server.setChannelHandlerContext(ctx);
-					if (!getContext().isTrustNegotiationMode()) {
-						server.setTrusted(true);
-					}
-				}
-			} catch (Exception e) {
-				logger.debug(e.getLocalizedMessage(), e);
-			}
+//			try {
+//				Certificate[] peerCerts = this.sslHandler.engine().getSession().getPeerCertificates();
+//				if (!getContext().isTrustNegotiationMode()) {
+//					Utils.verifyCertChain(peerCerts, getContext().getTrustedCerts());
+//				}
+//
+//				Certificate peerCert = peerCerts[0];
+//				if (peerCert instanceof X509Certificate) {
+//					PeerContext server = ClientAgent.this.server;
+//					server.setCert((X509Certificate) peerCert);
+//					server.setChannelHandlerContext(ctx);
+//					if (!getContext().isTrustNegotiationMode()) {
+//						server.setTrusted(true);
+//					}
+//				}
+//			} catch (Exception e) {
+//				logger.debug(e.getLocalizedMessage(), e);
+//			}
 		}
 	}
 }

@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import javax.net.ssl.SSLException;
 import javax.net.ssl.X509TrustManager;
 
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ public abstract class AbstractAgent {
 
 	/**
 	 * Creates a request handler for a specific request type
-	 * 
+	 *
 	 * @param <TReq>
 	 * @param <TResp>
 	 * @param classOfRequest
@@ -63,7 +64,7 @@ public abstract class AbstractAgent {
 
 	/**
 	 * Creates a request handler for a specific message type
-	 * 
+	 *
 	 * @param <T>
 	 * @param classOfMessage
 	 *          Specifies the message type
@@ -102,7 +103,7 @@ public abstract class AbstractAgent {
 	/**
 	 * Starts the agent up ie. by entering listening mode (for server) or making connection attempts to configured server-peer
 	 */
-	protected void startup() {
+	protected void startup() throws CertificateException, SSLException {
 	}
 
 	/**

@@ -93,7 +93,7 @@ public class ServerAgent extends AbstractAgent {
 
 	@Override
 	public void startup() {
-		super.startup();
+//		super.startup();
 
 		this.shutdownRequested = false;
 
