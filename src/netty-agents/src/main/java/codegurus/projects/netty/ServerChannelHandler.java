@@ -38,10 +38,13 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<Packet> {
     protected void channelRead0(ChannelHandlerContext ctx, Packet input) throws Exception {
 
         if (input.isOk() == false) {
-            LOG.info("NO "+input.view());
+//            LOG.info("NO "+input.view());
         } else {
-            LOG.info("OK "+input.view());
-            blockingQueue.put(input);
+//            LOG.info("OK "+input.view());
+//            blockingQueue.put(input);
+            ctx.channel().writeAndFlush(input);
+            Thread.sleep(10);
+//            wait(1000);
         }
     }
 

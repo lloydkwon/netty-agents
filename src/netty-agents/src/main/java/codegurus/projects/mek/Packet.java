@@ -3,6 +3,7 @@ package codegurus.projects.mek;
 import org.apache.commons.lang3.StringUtils;
 
 public class Packet {
+    private String channelId;
     private Byte header;
     private Byte data1;
     private Byte data2;
@@ -44,6 +45,13 @@ public class Packet {
         isOk = ok;
     }
 
+    public String getChannelId() {
+        return channelId;
+    }
+
+    public void setChannelId(String channelId) {
+        this.channelId = channelId;
+    }
 
     public String view() {
         Byte h = getHeader();

@@ -17,7 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -82,15 +84,23 @@ public class ServerAgent extends BasicAgent {
 		BlockingQueue<Packet> blockingQueue = new LinkedBlockingQueue<>();
 		ServerAgent serverAgent = new ServerAgent(new ServerChannelHandler(blockingQueue));
 		serverAgent.startup("localhost",8099);
-		CopyOnWriteArrayList<Packet> list = new CopyOnWriteArrayList<>();
+		ConcurrentHashMap<String, List<Packet>> map = new ConcurrentHashMap<>();
 		ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
 		executorService.scheduleWithFixedDelay(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					System.out.println(".... ");
+//					System.out.println(".... ");
 					Packet packet = blockingQueue.take();
-					list.add(packet);
+					String channelId = packet.getChannelId();
+					if (map.containsKey(channelId)) {
+						List<Packet> list = map.get(channelId);
+						list.add(packet);
+					} else {
+						List<Packet> list = new CopyOnWriteArrayList<>();
+						list.add(packet);
+						map.put(channelId, list);
+					}
 				} catch (InterruptedException e) {
 					System.out.println(e.getMessage());
 				}
@@ -102,24 +112,31 @@ public class ServerAgent extends BasicAgent {
 			@Override
 			public void run() {
 				try {
-					if (list.size() > 0) {
-//						int last = list.size();
-//						if (last > 120) {
-//							last = 120;
-//						}
-						int last = 1;
-						System.out.println("1list "+list.size());
-						List<Packet> packets = new ArrayList<>(list.subList(0, last));
-						list.subList(0, last).clear();
+					for (String channelId : map.keySet()) {
+						List<Packet> list = map.get(channelId);
+						if (list.size() > 0) {
+						int last = list.size();
+						if (last > 120) {
+							last = 120;
+						}
+//							int last = 1;
+							System.out.println(channelId+ " 1list "+list.size());
+							List<Packet> subList = list.subList(0, last);
+							List<Packet> packets = new ArrayList<>(subList);
+							list.subList(0, last).clear();
 
-						System.out.println("2list "+list.size());
-						System.out.println("packets "+packets.size());
+							System.out.println(channelId+" 2list "+list.size());
+							System.out.println(channelId+" packets "+packets.size());
 
-					} else {
-						//SKIP
+						} else {
+							//SKIP
+						}
 					}
+
 				} catch (Exception e) {
-					System.out.println(e.getMessage());
+					e.printStackTrace();
+
+					throw e;
 				}
 
 

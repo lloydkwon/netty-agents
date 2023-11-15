@@ -13,17 +13,26 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 @ChannelHandler.Sharable
 public class ClientChannelHandler extends SimpleChannelInboundHandler<Packet> {
     private static final Logger LOG = LoggerFactory.getLogger(ClientChannelHandler.class);
-    private Map<String, Integer> temp = new HashMap<>();
+    private Map<String, BlockingQueue<Packet>> map;
+
+    public ClientChannelHandler(Map<String, BlockingQueue<Packet>> map) {
+        this.map = map;
+    }
+
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        LOG.info("channelActive "+channelId(ctx));
-
-        sendNoOkMsg(ctx);
+        String channelId = channelId(ctx);
+        LOG.info("channelActive "+channelId);
+        map.put(channelId, new LinkedBlockingQueue<>());
+//        sendNoOkMsg(ctx);
         sendOkMsg(ctx);
-
 
     }
 
@@ -46,12 +55,12 @@ public class ClientChannelHandler extends SimpleChannelInboundHandler<Packet> {
         packet.setData1(bytes[1]);
         packet.setData2(bytes[2]);
         ctx.channel().writeAndFlush(packet);
-        Thread.sleep(10);
-        ctx.channel().writeAndFlush(packet);
-        Thread.sleep(10);
-        ctx.channel().writeAndFlush(packet);
-        Thread.sleep(10);
-        ctx.channel().writeAndFlush(packet);
+//        Thread.sleep(10);
+//        ctx.channel().writeAndFlush(packet);
+//        Thread.sleep(10);
+//        ctx.channel().writeAndFlush(packet);
+//        Thread.sleep(10);
+//        ctx.channel().writeAndFlush(packet);
     }
 
     private String channelId(ChannelHandlerContext ctx) {
@@ -60,8 +69,7 @@ public class ClientChannelHandler extends SimpleChannelInboundHandler<Packet> {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         String channelId = channelId(ctx);
-        LOG.info("channelInactive "+channelId + " "+temp);
-        temp.remove(channelId);
+        map.remove(channelId);
     }
 
 //    @Override
@@ -75,13 +83,15 @@ public class ClientChannelHandler extends SimpleChannelInboundHandler<Packet> {
 //    }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Packet input) throws Exception {
-        if (input.isOk() == false) {
-            LOG.info("NO "+input);
+    protected void channelRead0(ChannelHandlerContext ctx, Packet packet) throws Exception {
+        if (packet.isOk()) {
+            map.get(channelId(ctx)).put(packet);
+            ctx.writeAndFlush(packet);
+//            LOG.info("OK "+input);
         } else {
-            LOG.info("OK "+input);
+//            LOG.info("NO "+input);
         }
-//        ctx.writeAndFlush(NettyUtils.appendNewLine(msg+"_"+integer));
+
     }
 
     @Override

@@ -2,6 +2,7 @@ package codegurus.projects.mek;
 
 import codegurus.projects.netty.ClientAgent;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
 import org.slf4j.Logger;
@@ -29,14 +30,15 @@ public class MekDecoder extends ReplayingDecoder<MekDecoder.State> {
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) throws Exception {
+
         if (State.INIT == state()) {
             state(readBuffer(byteBuf));
             checkpoint(state());
             if (state() == State.DATA) {
 
-                list.add(reset(false));
+                list.add(reset(false,channelId(channelHandlerContext.channel())));
             } else if (state() == State.BAD_PACKET) {
-                list.add(reset(false));
+                list.add(reset(false,channelId(channelHandlerContext.channel())));
             } else {
                 // HEADER 이면 정상.
                 //OK 정상..
@@ -47,30 +49,33 @@ public class MekDecoder extends ReplayingDecoder<MekDecoder.State> {
             if (state() == State.DATA1) {
                 //OK 정상..
             }else {
-                list.add(reset(false));
+                list.add(reset(false,channelId(channelHandlerContext.channel())));
             }
         } else if (State.DATA1 == state()) {
             state(readBuffer(byteBuf));
             checkpoint(state());
             if (state() == State.DATA2) {
-                list.add(reset(true));
+                list.add(reset(true,channelId(channelHandlerContext.channel())));
             } else {
-                list.add(reset(false));
+                list.add(reset(false,channelId(channelHandlerContext.channel())));
             }
         }
     }
 
+    private String channelId(Channel channel) {
+        return channel.id().asShortText();
+    }
 
     private MekDecoder.State readBuffer(ByteBuf buffer) {
         byte b = buffer.readByte();
         if (isHeader(b)) {
             if (state() == State.INIT) {
-                logger.debug("[OK]INIT HEADER");
+                logger.trace("[OK]INIT HEADER");
                 this.packet = new Packet();
                 this.packet.setHeader(b);
                 return State.HEADER;
             }else {
-                logger.debug("[ERR]INIT NO HEADER");
+                logger.trace("[ERR]INIT NO HEADER");
                 return State.BAD_PACKET;
             }
         } else {
@@ -79,17 +84,17 @@ public class MekDecoder extends ReplayingDecoder<MekDecoder.State> {
                     this.packet = new Packet();
                 }
                 this.packet.setData1(b);
-                logger.debug("[OK]HEADER DATA1");
+                logger.trace("[OK]HEADER DATA1");
                 return State.DATA1;
             } else if (state() == State.DATA1) {
                 if (this.packet == null) {
                     this.packet = new Packet();
                 }
-                logger.debug("[OK]DATA1 DATA2");
+                logger.trace("[OK]DATA1 DATA2");
                 this.packet.setData2(b);
                 return State.DATA2;
             } else {
-                logger.debug("[ERR]BAD_PACKET "+state());
+                logger.trace("[ERR]BAD_PACKET "+state());
                 return State.BAD_PACKET;
                 // NO..
             }
@@ -104,7 +109,7 @@ public class MekDecoder extends ReplayingDecoder<MekDecoder.State> {
         }
     }
 
-    private Packet reset(boolean isOk) {
+    private Packet reset(boolean isOk,String channelId) {
         Packet packet = null;
         if (this.packet == null) {
             packet = new Packet();
@@ -112,6 +117,7 @@ public class MekDecoder extends ReplayingDecoder<MekDecoder.State> {
             packet = this.packet;
         }
         packet.setOk(isOk);
+        packet.setChannelId(channelId);
         this.packet = null;
         checkpoint(State.INIT);
         return packet;
