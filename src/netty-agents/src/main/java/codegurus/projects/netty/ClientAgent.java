@@ -90,52 +90,52 @@ public class ClientAgent extends BasicAgent {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Map<String, BlockingQueue<Packet>> map = new ConcurrentHashMap<>();
-		EventLoopGroup workGroup = new NioEventLoopGroup();
-		ClientAgent clientAgent = new ClientAgent(new ClientChannelHandler(map),workGroup);
-		clientAgent.startup("localhost",8099);
-		ClientAgent clientAgent2 = new ClientAgent(new ClientChannelHandler(map),workGroup);
-		clientAgent2.startup("localhost",8099);
-		ClientAgent clientAgent3 = new ClientAgent(new ClientChannelHandler(map),workGroup);
-		clientAgent3.startup("localhost",8099);
-		ClientAgent clientAgent4 = new ClientAgent(new ClientChannelHandler(map),workGroup);
-		clientAgent4.startup("localhost",8099);
-		ClientAgent clientAgent5 = new ClientAgent(new ClientChannelHandler(map),workGroup);
-		clientAgent5.startup("localhost",8099);
-		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-		ThreadPoolExecutor threadPool = new ThreadPoolExecutor(NettyRuntime.availableProcessors(), NettyRuntime.availableProcessors()*2, 10,TimeUnit.SECONDS, new LinkedBlockingQueue<>());
-
-		executorService.scheduleAtFixedRate(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					for (String channelId : map.keySet()) {
-						BlockingQueue<Packet> dataQueue = map.get(channelId);
-						if (!dataQueue.isEmpty()) {
-							System.out.println(channelId+ " 1list "+dataQueue.size());
-							List<Packet> batch = new ArrayList<>();
-							dataQueue.drainTo(batch, Math.min(dataQueue.size(), 120));
-							threadPool.submit(new PacketsHandler(batch));
-						}
-					}
-
-				} catch (Exception e) {
-					e.printStackTrace();
-					throw e;
-				}
-
-
-			}
-		}, 0, 200, TimeUnit.MILLISECONDS);
-
-		System.out.println("ok 2");
-		Thread.sleep(1000000);
-		clientAgent.shutdown();
-		clientAgent2.shutdown();
-		clientAgent3.shutdown();
-		clientAgent4.shutdown();
-		clientAgent5.shutdown();
-		workGroup.shutdownGracefully();
-		Thread.sleep(10000);
+//		Map<String, BlockingQueue<Packet>> map = new ConcurrentHashMap<>();
+//		EventLoopGroup workGroup = new NioEventLoopGroup();
+//		ClientAgent clientAgent = new ClientAgent(new ClientChannelHandler(map),workGroup);
+//		clientAgent.startup("localhost",8099);
+//		ClientAgent clientAgent2 = new ClientAgent(new ClientChannelHandler(map),workGroup);
+//		clientAgent2.startup("localhost",8099);
+//		ClientAgent clientAgent3 = new ClientAgent(new ClientChannelHandler(map),workGroup);
+//		clientAgent3.startup("localhost",8099);
+//		ClientAgent clientAgent4 = new ClientAgent(new ClientChannelHandler(map),workGroup);
+//		clientAgent4.startup("localhost",8099);
+//		ClientAgent clientAgent5 = new ClientAgent(new ClientChannelHandler(map),workGroup);
+//		clientAgent5.startup("localhost",8099);
+//		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+//		ThreadPoolExecutor threadPool = new ThreadPoolExecutor(NettyRuntime.availableProcessors(), NettyRuntime.availableProcessors()*2, 10,TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+//
+//		executorService.scheduleAtFixedRate(new Runnable() {
+//			@Override
+//			public void run() {
+//				try {
+//					for (String channelId : map.keySet()) {
+//						BlockingQueue<Packet> dataQueue = map.get(channelId);
+//						if (!dataQueue.isEmpty()) {
+//							System.out.println(channelId+ " 1list "+dataQueue.size());
+//							List<Packet> batch = new ArrayList<>();
+//							dataQueue.drainTo(batch, Math.min(dataQueue.size(), 120));
+//							threadPool.submit(new PacketsHandler(batch));
+//						}
+//					}
+//
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//					throw e;
+//				}
+//
+//
+//			}
+//		}, 0, 200, TimeUnit.MILLISECONDS);
+//
+//		System.out.println("ok 2");
+//		Thread.sleep(1000000);
+//		clientAgent.shutdown();
+//		clientAgent2.shutdown();
+//		clientAgent3.shutdown();
+//		clientAgent4.shutdown();
+//		clientAgent5.shutdown();
+//		workGroup.shutdownGracefully();
+//		Thread.sleep(10000);
 	}
 }

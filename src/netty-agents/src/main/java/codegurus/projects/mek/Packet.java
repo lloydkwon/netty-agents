@@ -2,13 +2,16 @@ package codegurus.projects.mek;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * packet의 기본 단위는 헤더와 2바이트의 데이터인데.. 하나의 packet을 표현한 클래스.
+ */
 public class Packet {
-    private String channelId;
-    private Byte header;
-    private Byte data1;
-    private Byte data2;
+    private String channelId;   // 유입된 channelid
+    private Byte header;    // 헤더
+    private Byte data1;     //데이터1
+    private Byte data2;     //데이터2
 
-    private boolean isOk = false;
+    private boolean isOk = false;   // 프로토콜에 맞게 유입된 상태인지 여부확인.
 
     public Packet() {
     }
@@ -53,6 +56,10 @@ public class Packet {
         this.channelId = channelId;
     }
 
+    /**
+     * 헤더와 data 부분 데이터를 알아보기 편한 형태로 반환.
+     * @return
+     */
     public String view() {
         Byte h = getHeader();
         Byte d1 = getData1();
@@ -69,6 +76,11 @@ public class Packet {
         }
     }
 
+    /**
+     * headerCode 형태로 변환함.
+     * @param value
+     * @return
+     */
     private String headerCode(int value) {
         if (value == 0) {
             return "00H";
@@ -82,6 +94,11 @@ public class Packet {
         }
     }
 
+    /**
+     * 데이터부분 데이터를 2진수로 보여줌.
+     * @param i
+     * @return
+     */
     private String convert7Binary(int i) {
 
         return StringUtils.leftPad(Integer.toBinaryString(i), 7, '0');

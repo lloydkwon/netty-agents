@@ -1,22 +1,13 @@
 package codegurus.projects.netty;
 
-import codegurus.projects.mek.MekDecoder;
-import codegurus.projects.mek.MekEncoder;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
+import codegurus.projects.netty.codec.MekDecoder;
+import codegurus.projects.netty.codec.MekEncoder;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.Delimiters;
-import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.CharsetUtil;
-
-import javax.net.ssl.SSLEngine;
 
 public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> {
     private static final StringDecoder DECODER = new StringDecoder();

@@ -84,66 +84,7 @@ public class ServerAgent extends BasicAgent {
 		BlockingQueue<Packet> blockingQueue = new LinkedBlockingQueue<>();
 		ServerAgent serverAgent = new ServerAgent(new ServerChannelHandler(blockingQueue));
 		serverAgent.startup("localhost",8099);
-		ConcurrentHashMap<String, List<Packet>> map = new ConcurrentHashMap<>();
-		ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
-		executorService.scheduleWithFixedDelay(new Runnable() {
-			@Override
-			public void run() {
-				try {
-//					System.out.println(".... ");
-					Packet packet = blockingQueue.take();
-					String channelId = packet.getChannelId();
-					if (map.containsKey(channelId)) {
-						List<Packet> list = map.get(channelId);
-						list.add(packet);
-					} else {
-						List<Packet> list = new CopyOnWriteArrayList<>();
-						list.add(packet);
-						map.put(channelId, list);
-					}
-				} catch (InterruptedException e) {
-					System.out.println(e.getMessage());
-				}
-			}
-		}, 0,1, TimeUnit.NANOSECONDS);
-		System.out.println("ok 1");
 
-		executorService.scheduleAtFixedRate(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					for (String channelId : map.keySet()) {
-						List<Packet> list = map.get(channelId);
-						if (list.size() > 0) {
-						int last = list.size();
-						if (last > 120) {
-							last = 120;
-						}
-//							int last = 1;
-							System.out.println(channelId+ " 1list "+list.size());
-							List<Packet> subList = list.subList(0, last);
-							List<Packet> packets = new ArrayList<>(subList);
-							list.subList(0, last).clear();
-
-							System.out.println(channelId+" 2list "+list.size());
-							System.out.println(channelId+" packets "+packets.size());
-
-						} else {
-							//SKIP
-						}
-					}
-
-				} catch (Exception e) {
-					e.printStackTrace();
-
-					throw e;
-				}
-
-
-			}
-		}, 0, 1, TimeUnit.SECONDS);
-
-		System.out.println("ok 2");
 		Thread.sleep(10000000);
 	}
 }

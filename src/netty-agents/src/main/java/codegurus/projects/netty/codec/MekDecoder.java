@@ -1,6 +1,6 @@
-package codegurus.projects.mek;
+package codegurus.projects.netty.codec;
 
-import codegurus.projects.netty.ClientAgent;
+import codegurus.projects.mek.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
